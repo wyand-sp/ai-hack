@@ -1,16 +1,21 @@
+// Configuration
+const user = "damyan"; // TODO: move to popup config
+const endpoint = "https://aibudy.gauss.bg/consume_browser";
+
 // Listen for the content from the content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Check if the message contains the page content
     if (message.content) {
         // Send the content to your API endpoint
-        fetch('https://aibudy.tabcrunch.com/consume_browser', {
+        fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                url: sender.tab.url,   // Send the URL of the page
-                content: message.content  // Send the HTML content of the page
+                user,
+                URI: sender.tab.url,   // Send the URL of the page
+                payload: message.content  // Send the HTML content of the page
             })
         })
         .then(response => response.json())
