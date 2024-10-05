@@ -1,6 +1,6 @@
 // Configuration
 const user = "damyan"; // TODO: move to popup config
-const endpoint = "https://aibudy.gauss.bg/consume_browser";
+const endpoint = "https://aibudy.gauss.bg/consume_browser/";
 
 // Listen for the content from the content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -18,9 +18,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 payload: message.content  // Send the HTML content of the page
             })
         })
-        .then(response => response.json())
-        .then(data => console.log("Data sent successfully:", data))
-        .catch(error => console.error("Error sending data:", error));
+            .then(response => response.json())
+            .then(data => console.log("Data sent successfully:", data))
+            .catch(error => console.error("Error sending data:", error));
     }
 });
 
@@ -30,7 +30,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && /^http/.test(tab.url)) {
         // Inject content script to capture page content
         chrome.scripting.executeScript({
-            target: {tabId: tabId},
+            target: { tabId: tabId },
             function: capturePageContent
         });
     }
@@ -42,5 +42,5 @@ function capturePageContent() {
     const pageContent = document.body.innerText;
 
     // Send the captured content back to the background script
-    chrome.runtime.sendMessage({content: pageContent});
+    chrome.runtime.sendMessage({ content: pageContent });
 }

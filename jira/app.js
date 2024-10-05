@@ -4,7 +4,7 @@ import { username, token, jql, jiraURL } from "./config.js"
 
 // Configuration - TODO MOVE
 const user = "damyan";
-const endpoint = "https://aibudy.gauss.bg/consume_browser";
+const endpoint = "https://aibudy.gauss.bg/consume_browser/";
 
 fetch(jiraURL + '/rest/api/2/search?jql=' + jql, {
   method: 'GET',
@@ -19,12 +19,14 @@ fetch(jiraURL + '/rest/api/2/search?jql=' + jql, {
   .then(async function (text) {
     const parsed = JSON.parse(text);
 
+    let maxRecords = 5;
     for (const single of parsed.issues) {
       console.log(
         single.key,
         single.fields.summary,
-        single.fields.description
+        // single.fields.description
       );
+
       await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -36,6 +38,10 @@ fetch(jiraURL + '/rest/api/2/search?jql=' + jql, {
           payload: single.fields.summary + ' ' + single.fields.description
         })
       });
+
+      if (maxRecords-- <= 0) {
+        break;
+      }
     };
   })
   .catch(err => console.error(err));

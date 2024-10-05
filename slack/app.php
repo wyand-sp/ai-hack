@@ -2,34 +2,34 @@
 include dirname(__FILE__) . DIRECTORY_SEPARATOR . 'config.php';
 
 // Read the incoming POST request from Slack
-$request_body = file_get_contents('php://input');
-$event_data = json_decode($request_body, true);
+$requestBody = file_get_contents('php://input');
+$eventData = json_decode($requestBody, true);
 
 // Check for URL verification request (Slack's challenge)
-if (isset($event_data['type']) && $event_data['type'] === 'url_verification') {
-	echo json_encode(['challenge' => $event_data['challenge']]);
+if (isset($eventData['type']) && $eventData['type'] === 'url_verification') {
+	echo json_encode(['challenge' => $eventData['challenge']]);
 	exit();
 }
 
 // Process incoming messages
-if (isset($event_data['event']) && $event_data['event']['type'] === 'message') {
-	$message_text = $event_data['event']['text'];
-	$user = $event_data['event']['user'];
-	$channel = $event_data['event']['channel'];
-	$timestamp = $event_data['event']['ts'];
+if (isset($eventData['event']) && $eventData['event']['type'] === 'message') {
+	$messageText = $eventData['event']['text'];
+	$user = $eventData['event']['user'];
+	$channel = $eventData['event']['channel'];
+	$timestamp = $eventData['event']['ts'];
 
 	// Log the message (for debugging)
-	error_log("New message received: $message_text");
+	error_log("New message received: $messageText");
 
 	// You can send this message to your external API or store it
-	sendMessageToAPI($message_text, $user, $channel, $timestamp);
+	sendMessageToAPI($messageText, $user, $channel, $timestamp);
 }
 
 // Function to send the message to an external API
 function sendMessageToAPI($message, $user, $channel, $timestamp) {
 	$data = [
 		'user' => USERNAME,
-		'URI' => '#' . $channel . ' ' . $timestamp,
+		'URI' => 'Slack ' . $channel . ' ' . $timestamp,
 		'payload' => $message,
 	];
 
