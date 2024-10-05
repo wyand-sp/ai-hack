@@ -1,4 +1,8 @@
+.DS_Store
 email/config.php
 jira/config.js
 slack/config.php
 /node_modules
+/backend/mlruns/
+/backend/__pycache__/
+/backend/output.txt
