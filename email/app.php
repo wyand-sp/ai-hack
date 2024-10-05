@@ -14,7 +14,6 @@ try {
     if ($timestamp > 0) {
         $emailIds = imap_search($mailbox, 'ALL');
         rsort($emailIds);
-        $emails = [];
 
         foreach ($emailIds as $emailId) {
             $header = imap_headerinfo($mailbox, $emailId);
@@ -23,13 +22,23 @@ try {
             }
             $contnet = imap_body($mailbox, $emailId);
 
-            $emails[] = [
-                "date" => $header->date,
-                "subject" => $header->subject,
-                "to" => $header->to,
-                "content" => $contnet
-            ];
-            # TODO: Call the vector store
+            $data = array(
+                'user' => USERNAME,
+                'URI' => 'Email "' . $header->subject . '" from ' . $header->date,
+                'payload' => $contnet
+            );
+
+            $options = array(
+                'http' => array(
+                    'header'  => "Content-type: application/json\r\n",
+                    'method'  => 'POST',
+                    'content' => json_encode($data),
+                ),
+            );
+
+            $context  = stream_context_create($options);
+            $result = file_get_contents(CONSUME_URL, false, $context);
+            // TODO: handle $result
         }
     }
 } catch (Exception $e) {

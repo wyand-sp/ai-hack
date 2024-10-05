@@ -1,4 +1,6 @@
 <?php
+include dirname(__FILE__) . DIRECTORY_SEPARATOR . 'config.php';
+
 // Read the incoming POST request from Slack
 $request_body = file_get_contents('php://input');
 $event_data = json_decode($request_body, true);
@@ -25,7 +27,24 @@ if (isset($event_data['event']) && $event_data['event']['type'] === 'message') {
 
 // Function to send the message to an external API
 function sendMessageToAPI($message, $user, $channel, $timestamp) {
-    // TODO - send to vector store
+    $data = array(
+        'user' => USERNAME,
+        'URI' => '#' . $channel . ' ' . $timestamp,
+        'payload' => $message
+    );
+
+    $options = array(
+        'http' => array(
+            'header'  => "Content-type: application/json\r\n",
+            'method'  => 'POST',
+            'content' => json_encode($data),
+        ),
+    );
+
+    $context  = stream_context_create($options);
+    $result = file_get_contents(CONSUME_URL, false, $context);
+    // TODO: handle $result
 }
 
-http_response_code(200);  // Respond with HTTP 200 status to acknowledge receipt
+// Respond with HTTP 200 status to acknowledge receipt
+http_response_code(200);
