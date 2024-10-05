@@ -1,0 +1,15 @@
+artifact_uri: file:///opt/aibudy/backend/mlruns/397632022718840136/42d2c05afd6643ce96a42df6a30657ab/artifacts
+end_time: 1728136429215
+entry_point_name: ''
+experiment_id: '397632022718840136'
+lifecycle_stage: active
+run_id: 42d2c05afd6643ce96a42df6a30657ab
+run_name: welcoming-crane-666
+run_uuid: 42d2c05afd6643ce96a42df6a30657ab
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1728136426994
+status: 3
+tags: []
+user_id: aibudy
