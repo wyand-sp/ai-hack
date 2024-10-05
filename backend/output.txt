@@ -1,3 +1,0 @@
-
-
-TabCrunch is a web browser extension that allows users to save and organize their open tabs for later use. It also has a feature that suggests related content based on the tabs that are currently open. This allows users to quickly access and switch between multiple tabs without losing track of their browsing history. 
