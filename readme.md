@@ -1,0 +1,8 @@
+- backend for storing
+- backend for
+- browser
+- JIRA
+- email
+- slack
+- folder
+- frontend
