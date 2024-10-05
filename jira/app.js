@@ -16,26 +16,26 @@ fetch(jiraURL + '/rest/api/2/search?jql=' + jql, {
   .then(response => {
     return response.text();
   })
-  .then(async function(text) {
+  .then(async function (text) {
     const parsed = JSON.parse(text);
 
     for (const single of parsed.issues) {
-        console.log(
-            single.key,
-            single.fields.summary,
-            single.fields.description
-        );
-        await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-              user,
-              URI: 'JIRA ' + single.key,
-              payload: single.fields.summary + ' ' + single.fields.description
-          })
-        });
+      console.log(
+        single.key,
+        single.fields.summary,
+        single.fields.description
+      );
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          user,
+          URI: 'JIRA ' + single.key,
+          payload: single.fields.summary + ' ' + single.fields.description
+        })
+      });
     };
   })
   .catch(err => console.error(err));

@@ -1,0 +1,21 @@
+{
+  "plugins": ["@prettier/plugin-php"],
+  "overrides": [
+    {
+      "files": "*.php",
+      "options": {
+        "phpVersion": "7.1",
+        "braceStyle": "1tbs",
+        "useTabs": true,
+        "singleQuote": true,
+        "printWidth": 120
+      }
+    },
+    {
+      "files": "*.js",
+      "options": {
+        "printWidth": 120
+      }
+    }
+  ]
+}
