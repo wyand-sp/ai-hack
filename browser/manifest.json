@@ -1,0 +1,18 @@
+{
+    "manifest_version": 3,
+    "name": "External Brain Data Extractor",
+    "version": "1.0",
+
+    "background": {
+        "service_worker": "./background.js",
+        "type": "module"
+      },
+
+      "action": {
+        "default_popup": "popup.html"
+      },
+
+      "permissions": ["tabs", "scripting", "storage", "nativeMessaging"],
+      "optional_permissions": ["bookmarks", "tabGroups"],
+      "host_permissions": ["https://*/*"]
+  }
