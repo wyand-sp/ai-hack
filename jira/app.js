@@ -22,6 +22,7 @@ fetch(jiraURL + '/rest/api/2/search?jql=' + jql, {
     let maxRecords = 5;
     for (const single of parsed.issues) {
       console.log(
+        // single,
         single.key,
         single.fields.summary,
         // single.fields.description
@@ -34,7 +35,7 @@ fetch(jiraURL + '/rest/api/2/search?jql=' + jql, {
         },
         body: JSON.stringify({
           user,
-          URI: 'JIRA ' + single.key,
+          URI: jiraURL + '/browse/' + single.key,
           payload: single.fields.summary + ' ' + single.fields.description
         })
       });

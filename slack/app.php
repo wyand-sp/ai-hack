@@ -29,7 +29,7 @@ if (isset($eventData['event']) && $eventData['event']['type'] === 'message') {
 function sendMessageToAPI($message, $user, $channel, $timestamp) {
 	$data = [
 		'user' => USERNAME,
-		'URI' => 'Slack ' . $channel . ' ' . $timestamp,
+		'URI' => 'https://slack.com/app_redirect?channel=' . $channel,
 		'payload' => $message,
 	];
 
