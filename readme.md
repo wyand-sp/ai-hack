@@ -28,7 +28,7 @@ External Brain doesn’t return the actual content from these sources. Instead, 
 - A PHP push-based Slack integration
 - A Python based script, called via crontab that analyses selected folder's files
 - A React-based front-end to search for content
-- A Python FastAPI backend:
+- A Python FastAPI backend:  
   Accepts requests from extensions and integrations for storing the vectorized documents in **Pinecone.io**  
   WebSocket interface for the frontend using **Pinecone** for retrieving vectors to the frontend as reference.  
   **OpenAI** prompts for extracting information from images.  
