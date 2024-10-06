@@ -1,8 +1,5 @@
 import os
-import textract
-import mlflow
 import sys
-import json
 from uuid import uuid4
 from typing import List, Optional
 from fastapi import (
@@ -13,18 +10,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from pinecone import Pinecone, ServerlessSpec
-from langchain_openai import OpenAI
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import PromptTemplate
-from langchain.chains import ConversationChain, ConversationalRetrievalChain
-from langchain_openai import OpenAIEmbeddings
-from langchain.memory import ConversationBufferMemory
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-# from langchain.vectorstores import Pinecone as PineconeVectorStore
+from extract_tools import extract_text_from_pdf, extract_text_from_file, extract_text_from_image
 
 
 load_dotenv()
-
 
 app = FastAPI()
 
@@ -39,24 +28,14 @@ app.add_middleware(
 # In-memory user data storage
 users = {}
 
-# Ensure OPENAI_API_KEY and PINECONE_API_KEY are set
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT")
-if not OPENAI_API_KEY or not PINECONE_API_KEY or not PINECONE_ENVIRONMENT:
+if not PINECONE_API_KEY or not PINECONE_ENVIRONMENT or not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY, PINECONE_API_KEY, or PINECONE_ENVIRONMENT not set.")
 
 # Initialize Pinecone
 pc = Pinecone(api_key=PINECONE_API_KEY)
-
-# Load embedding model
-embedding_model = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
-
-# Initialize LLM
-llm = OpenAI(
-    temperature=0.7,
-    openai_api_key=OPENAI_API_KEY,
-)
 
 class UserData(BaseModel):
     username: str
@@ -109,7 +88,6 @@ def update_user_vector_store(user: UserData, payload: str, URI: str):
         index = get_or_create_user_index(user.username)
 
         # Generate embeddings for the payload
-        # embeddings = embedding_model.embed_documents([payload])
         embeddings = pc.inference.embed(
             "multilingual-e5-large",
             inputs=[payload],
@@ -135,7 +113,7 @@ def update_user_vector_store(user: UserData, payload: str, URI: str):
 
     except Exception as e:
         print(f"Error updating user vector store: {e}")
-        raise HTTPException(status_code=500, detail="An error occurred while updating the user vector store.")
+        raise Exception("An error occurred while updating the user vector store.")
 
 
 @app.post("/login")
@@ -147,103 +125,18 @@ def login(login_request: LoginRequest):
 
 @app.post("/consume_browser")
 async def consume_browser(
-    user: str = Body(..., example="test"),  # Extract user from body
-    payload: Optional[str] = Body(..., example="Your payload data here"),  # Extract payload from body
-    URI: Optional[str] = Body(..., example="http://example.com/your-uri")  # Extract URI from body
+    user: str = Body(..., example="test"),
+    payload: Optional[str] = Body(..., example="Your payload data here"),
+    URI: Optional[str] = Body(..., example="http://example.com/your-uri")
 ):
     try:
-        # Get user object
-
         user_obj = get_user(user)
-
-        # Generate embeddings and update vector store,
         update_user_vector_store(user_obj, payload, URI)
         return {"message": "User vector updated."}
     except Exception as e:
         print(f"Error updating user vector store: {e}")
         raise HTTPException(status_code=500, detail="An error occurred while updating the user vector store.")
 
-# @app.websocket("/ws/{username}")
-# async def websocket_endpoint(websocket: WebSocket, username: str):
-#     await websocket.accept()
-#     user = get_user(username)
-
-#     # Initialize conversation memory
-#     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-#     mlflow.set_experiment("chatbot RAG")
-
-#     try:
-#         while True:
-#             data = await websocket.receive_text()
-#             user.chat_history.append(data)
-
-#             # Check if the user has an existing vector store in Pinecone
-#             index = get_or_create_user_index(user.username)
-#             vectors = index.describe_index_stats()  # Get stats to check if vectors exist
-
-#             if vectors['total_vector_count'] > 0:
-#                 # Use ConversationalRetrievalChain if vector store has data
-#                 vectorstore = PineconeVectorStore(index, embedding_model.embed_query, "text")
-#                 retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-
-#                 conversation = ConversationalRetrievalChain.from_llm(
-#                     llm=llm,
-#                     retriever=retriever,
-#                     memory=memory,
-#                     verbose=True
-#                 )
-
-#                 with mlflow.start_run():
-#                     mlflow.log_param("username", username)
-#                     mlflow.log_param("message", data)
-#                     mlflow.log_param("model", "OpenAI")
-#                     mlflow.log_param("temperature", llm.temperature)
-
-#                     # Run the conversation with the LLM and vector-based retrieval
-#                     response = conversation.run(data)
-
-#                     # Log model response and some metrics
-#                     mlflow.log_metric("response_length", len(response))
-#                     # Log the output
-#                     with open("output.txt", "w") as f:
-#                         f.write(response)
-#                     mlflow.log_artifact("output.txt")
-
-#             else:
-#                 # Use a basic ConversationChain if there is no vector data for retrieval
-#                 conversation = ConversationChain(
-#                     llm=llm,
-#                     memory=memory,
-#                     verbose=True
-#                 )
-
-#                 with mlflow.start_run():
-#                     mlflow.log_param("username", username)
-#                     mlflow.log_param("message", data)
-#                     mlflow.log_param("model", "OpenAI")
-#                     mlflow.log_param("temperature", llm.temperature)
-
-#                     # Run a standard conversation with no retrieval
-#                     response = conversation.run(input=data)
-
-#                     # Log model response and some metrics
-#                     mlflow.log_metric("response_length", len(response))
-#                     # Log the output
-#                     with open("output.txt", "w") as f:
-#                         f.write(response)
-#                     mlflow.log_artifact("output.txt")
-
-#             # Store the response in the user's chat history
-#             user.chat_history.append(response)
-
-#             # Send the response back to the client via WebSocket
-#             await websocket.send_text(response)
-
-#     except WebSocketDisconnect:
-#         print(f"User {username} disconnected")
-#     except Exception as e:
-#         print(f"Error during message handling: {e}")
-#         await websocket.send_text("An error occurred on the server.")
 
 @app.websocket("/ws/{username}")
 async def websocket_endpoint(websocket: WebSocket, username: str):
@@ -281,7 +174,7 @@ async def websocket_endpoint(websocket: WebSocket, username: str):
                     # Query the Pinecone index
                     results = index.query(
                         vector=x[0].values,
-                        top_k=3,
+                        top_k=1,
                         include_values=False,
                         include_metadata=True
                     )
@@ -293,16 +186,16 @@ async def websocket_endpoint(websocket: WebSocket, username: str):
                 serializable_results = []
                 for match in results['matches']:
                     serializable_results.append({
-                        'id': match['id'],
-                        'score': match['score'],
-                        'metadata': match.get('metadata', {})  # If metadata exists
+                        'metadata': match.get('metadata', {'URI'})
                     })
-
-                # Convert the serializable results to JSON
-                results_json = json.dumps(serializable_results)
+                return_string = ''
+                for x in serializable_results:
+                    if x['metadata']['URI'].startswith('http'):
+                        return_string += f'<br><a target="_blank" style="color: green;" href="'+ x['metadata']['URI'] + '">'
+                    return_string += f'<br>' + x['metadata']['URI']
 
                 # Send the results as JSON text via WebSocket
-                await websocket.send_text(results_json)
+                await websocket.send_text(return_string)
 
             except WebSocketDisconnect:
                 print("WebSocket connection closed")
@@ -311,3 +204,68 @@ async def websocket_endpoint(websocket: WebSocket, username: str):
     except Exception as e:
         print(f"GENERAL PINECONE FAIL {e}")
         raise HTTPException(status_code=500, detail="An error occurred during the WebSocket communication.")
+
+@app.post("/upload")
+async def upload_file(
+    username: str = Depends(get_current_username),
+    file: UploadFile = File(...)
+):
+    try:
+        user_obj = get_user(username)
+
+        try:
+            file_to_tmp = await file.read()
+            if len(file_to_tmp) > 5 * 1024 * 1024:
+                raise HTTPException(status_code=400, detail="File size exceeds the limit of 5MB.")
+        except Exception as e:
+            print(f"Error reading the file: {e}")
+            raise HTTPException(status_code=500, detail="An error occurred while reading the file.")
+
+        filename_tmp = f"/tmp/{uuid4()}"
+        with open(filename_tmp, "wb") as f:
+            f.write(file_to_tmp)
+
+        # Validate file type
+        allowed_extensions = {'txt', 'pdf', 'docx','jpeg','jpg','png'}
+        filename = file.filename
+        extension = filename.split('.')[-1].lower()
+        if extension not in allowed_extensions:
+            raise HTTPException(status_code=400, detail="Unsupported file type.")
+
+        if extension in ['jpeg','jpg','png']:
+            try:
+                # Extract text from the image
+                extracted_text = await extract_text_from_image(filename_tmp)
+            except Exception as e:
+                print(f"Error extracitng text from the image: {e}")
+                raise HTTPException(status_code=500, detail="An error occurred while extracting text from the image.")
+        elif extension in ['pdf']:
+            try:
+                # Extract text from the file
+                extracted_text = await extract_text_from_pdf(filename_tmp)
+            except Exception as e:
+                print(f"Error extracting text from file: {e}")
+                raise HTTPException(status_code=500, detail="An error occurred while extracting text from the file.")
+        else:
+            try:
+                # Extract text from the file
+                extracted_text = await extract_text_from_file(filename_tmp)
+            except Exception as e:
+                print(f"Error extracting text from file: {e}")
+                raise HTTPException(status_code=500, detail="An error occurred while extracting text from the file.")
+
+        # Remove the temporary file
+        os.remove(filename_tmp)
+        try:
+            # Generate embeddings and update vector store
+            update_user_vector_store(user_obj, extracted_text, filename)
+        except Exception as e:
+            print(f"Error updating user vector store: {e}")
+            raise HTTPException(status_code=500, detail="An error occurred while updating the user vector store.")
+
+        return {"message": "File uploaded and processed successfully."}
+
+
+    except Exception as e:
+        print(f"Error processing file: {e}")
+        raise HTTPException(status_code=500, detail=f"Error processing file: {e}")

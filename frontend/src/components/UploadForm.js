@@ -56,10 +56,10 @@ const styles = {
   dropzone: {
     border: '2px dashed #888',
     borderRadius: '5px',
-    padding: '20px',
+    padding: '5px',
     textAlign: 'center',
     cursor: 'pointer',
-    margin: '20px 0',
+    margin: '5px 0',
   },
 };
 
